@@ -1,103 +1,3 @@
-
-var express = require('express');
-var app = express();
-
-//app.engine('jade', require('jade').__express);
-
-//Register views folder
-app.set('views', './app/views'); // specify the views directory
-//Register template engine
-app.set('view engine', 'jade'); // register the template engine
-
-//Allow use static
-app.use(express.static('app/public'));
-//Allow download file
-//app.use(express.static('app/files'));
-
-
-
-//production or development
-//process.env.NODE_ENV = 'production';
-
-// ----------------------ERROR HANDLING
-app.use(logErrors);
-app.use(clientErrorHandler);
-app.use(errorHandler);
-
-//global.app = app;
-
-
-function logErrors(err, req, res, next) {
-  console.error(err.stack);
-  next(err);
-}
-
-function clientErrorHandler(err, req, res, next) {
-  if (req.xhr) {
-    res.send(500, { error: 'Something blew up!' });
-  } else {
-    next(err);
-  }
-}
-
-function errorHandler(err, req, res, next) {
-  res.status(500);
-  res.render('error', { error: err });
-}
-// ------------------- END ERROR HANDLING
-
-//Default is false
-global.is_debug = false;
-
-require('./app/tools/pre_init');
-require('./app/tools/general');
-var configs = require('./configs');
-showLog( process.argv );
-
-
-//nodejs run.js config_production.js
-var config_file = process.argv[2] || "config.json";
-showLog("Config file name is " + config_file);
-configs( config_file, function(config){
-  global.config = config;
-
-  app.set('env', config.env || "development" );
-  global.is_debug = config.env == "developement";
-
-  showWarn("debug is ",is_debug );
-
-  if ( is_debug ){
-    //Show pretty html on the bebug case
-    app.locals.pretty = true;
-  }
-
-  require('./app/db/db_schemal');
-
-  connectDB();
-
-});
-
-function connectDB(){
-  var mongoose = require('mongoose');
-  mongoose.connect( config.mongo_uri );
-  var db = mongoose.connection;
-  db.on('error', console.error.bind(console, 'connection error:'));
-  db.once('open', function callback () {
-    showSucc("Connected to the db");
-    
-    connectRedis(db);
-  });
-}
-
-/*
-function connectDB(){
-   var MongoClient = require('mongodb').MongoClient,
-   format = require('util').format;
-
-  //Connect to database
-  MongoClient.connect( config.mongo_uri , function(err, db) {
-    if(err) throw err;
-
     global.ObjectID = require('mongodb').ObjectID;
     global.db = db;
 
@@ -124,7 +24,7 @@ function connectRedis(db){
   });
 }
 
-function boot(db){
+
 
   var expressSession = require('express-session');
   var cookieParser = require('cookie-parser'); // the session is stored in a cookie, so we use this to parse it
@@ -184,4 +84,4 @@ function boot(db){
   app.use(function(req, res, next){
     res.status(404).send('Sorry cant find that!')
   });
-}
+
