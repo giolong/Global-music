@@ -1,19 +1,15 @@
-version: 2
+version: 2.1
 jobs:
-  build:
+  publish:
     docker:
-      - image: debian:stretch
+      - image: orus/hugo-builder
     steps:
       - checkout
-      - run:
-          name: Greeting
-          command: echo Hello, world.
-
-docker:
-      - image: orus/hugo-builder
-
-jobs:
-  build:
-    branches:
-      only:
-        - master
+workflows:
+  version: 2
+  build_site_and_publish:
+    jobs:
+      - publish:
+          filters:
+            branches:
+              only: master
